@@ -1,0 +1,104 @@
+package dao;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+
+import common.DBUtils;
+import vo.SearVO;
+import vo.VacVO;
+
+public class HosDAO {
+	public ArrayList<VacVO> getlist(){
+		ArrayList<VacVO> list = new ArrayList<VacVO>();
+		
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			con = DBUtils.getcConnection();
+			ps = con.prepareStatement(
+					"select \r\n"
+					+ "	b.h_zone,\r\n"
+					+ "	decode(b.h_zone,'10','서울','20','대전','30','대구','40','광주') as h_city,\r\n"
+					+ "	count(a.h_code) as h_count\r\n"
+					+ "from T6_HOSP b, T6_RESV a\r\n"
+					+ "where a.h_code(+) = b.h_code\r\n"
+					+ "group by b.h_zone\r\n"
+					+ "order by h_count desc");
+			rs = ps.executeQuery();
+			
+			while(rs.next()) {
+				VacVO vo = new VacVO();
+				vo.setH_zone(rs.getString("h_zone"));
+				vo.setH_city(rs.getString("h_city"));
+				vo.setH_count(rs.getString("h_count"));
+				list.add(vo);
+			}
+			rs.close();
+			ps.close();
+			con.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
+	public SearVO getSearch(int r_no) {
+		SearVO vo = new SearVO();
+		
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		
+		try {
+			con = DBUtils.getcConnection();
+			ps = con.prepareStatement(
+					"select \r\n"
+					+ "	c.r_no,\r\n"
+					+ "	a.j_name,\r\n"
+					+ "	decode(substr(a.j_jumin,8,1),'1','남','2','여') as gender,\r\n"
+					+ "	b.h_name,\r\n"
+					+ "	to_char(c.r_date,'yyyy\"년\" mm\"월\" dd\"일') as day,\r\n"
+					+ "	substr(c.r_time,1,2)||':'||substr(c.r_time,3,2) as r_time,\r\n"
+					+ "	decode(c.r_vcode,'V001','A백신','V002','B백신','V003','C백신') as r_vcode,\r\n"
+					+ "	decode(h_zone,'10','서울','20','대전','30','대구','40','광주') as h_zone\r\n"
+					+ "from T6_JUMIN a , T6_HOSP b , T6_RESV c\r\n"
+					+ "where a.j_jumin = c.j_jumin and c.h_code = b.h_code and c.r_no = ?\r\n"
+					+ "");
+			ps.setInt(1, r_no);
+			rs = ps.executeQuery();
+			
+			while(rs.next()) {
+				  vo.setR_no(rs.getString("r_no"));
+		          vo.setJ_name(rs.getString("j_name"));
+		          vo.setGender(rs.getString("gender"));
+		          vo.setH_name(rs.getString("h_name"));
+		          vo.setDay(rs.getString("day"));
+		          vo.setR_time(rs.getString("r_time"));
+		          vo.setR_vcode(rs.getString("r_vcode"));
+		          vo.setH_zone(rs.getString("h_zone"));
+			}
+			rs.close();
+			ps.close();
+			con.close();
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		return vo;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
